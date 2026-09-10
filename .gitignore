@@ -1,0 +1,18 @@
+# Sensitive credentials and secrets
+# .env
+# .env.local
+*.pem
+*.key
+
+node_modules/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log files and crash dumps
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
