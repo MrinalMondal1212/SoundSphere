@@ -1,6 +1,8 @@
 const userModel = require("../models/userModel")
 const statusCode = require("../utils/statusCode")
 const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
+const AuthMiddleware = require("../middleware/authMiddleware")
 
 //admin@gmail.com // super admin
 // const token = req.headers.authorization;
@@ -21,49 +23,69 @@ const bcrypt = require("bcryptjs")
 //             }
 
 class AuthController {
-    static async register(req, res) {
-        try {
-            const { name, email, password } = req.body
-            if (!name || !email || !password) {
-                return res.status(statusCode.BAD_REQUEST).json({
-                    success: false,
-                    message: "All fields are required "
-                })
-            }
-            //existing user
-            const existing = await userModel.findOne({ email })
-            if (existing) {
-                return res.status(statusCode.BAD_REQUEST).json({
-                    success: false,
-                    message: "User already exist "
-                })
-            }
-            //bcrypt js
-            const salt = 10
-            const hashedPassword = await bcrypt.hash(password, salt)
-            const data = new userModel({
-                name: name,
-                email: email,
-                password: hashedPassword
-            })
-            const user = await data.save()
+   static async register(req, res) {
+    try {
+        const { name, email, password, role } = req.body;
 
-            //register
-            return res.status(statusCode.OK).json({
-                success: true,
-                message: "User registered Successfully",
-                data: user
-            })
-
-        } catch (error) {
-            console.log(error)
-            return res.status(statusCode.SERVER_ERROR).json({
+        if (!name || !email || !password) {
+            return res.status(statusCode.BAD_REQUEST).json({
                 success: false,
-                message: "Internal Server Error !!"
-            })
-
+                message: "All fields are required"
+            });
         }
+
+        // Only user and artist can register themselves
+        if (role && !["user", "artist"].includes(role)) {
+            return res.status(statusCode.BAD_REQUEST).json({
+                success: false,
+                message: "Role must be either user or artist"
+            });
+        }
+
+        // Existing user
+        const existing = await userModel.findOne({ email });
+
+        if (existing) {
+            return res.status(statusCode.BAD_REQUEST).json({
+                success: false,
+                message: "User already exists"
+            });
+        }
+
+        // Hash password
+        const salt = 10;
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create user
+        const data = new userModel({
+            name: name,
+            email: email,
+            password: hashedPassword,
+            role: role || "user"
+        });
+
+        const user = await data.save();
+
+        return res.status(statusCode.OK).json({
+            success: true,
+            message: "Registration successful",
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(statusCode.SERVER_ERROR).json({
+            success: false,
+            message: "Internal Server Error !!"
+        });
     }
+}
     // login 
     static async login(req, res) {
         try {
@@ -90,17 +112,30 @@ class AuthController {
                     message: "Invalid Credentials"
                 })
             }
+            
+            // jwt verification and token jeneration will be here !!
+            // making the token like access token (time is set so aoutmatically you will logout)
+            const token = await jwt.sign({
+                id: existingUser._id,
+                name: existingUser.name,
+                email: existingUser.email,
+                phone: existingUser.phone,
+                role: existingUser.role
+            }, process.env.JWT_SECRET_KEY, { expiresIn: "1d" })
+            
             // login pls
-            return res.status(statusCode.OK).json({
+            return res.status(200).json({
                 success: true,
-                message: "User Login Successful",
+                message: "Login successful",
                 data: {
                     id: existingUser._id,
                     name: existingUser.name,
                     email: existingUser.email,
+                    phone: existingUser.phone,
                     role: existingUser.role
                 },
-            })
+                token: token
+            });
 
         } catch (error) {
             console.log(error)
