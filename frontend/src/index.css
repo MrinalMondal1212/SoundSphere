@@ -25,8 +25,22 @@
   --color-danger: #ef4444;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  overflow-x: hidden;
   background-color: var(--color-background);
   color: var(--color-text);
 }
+
+/* Hides the native scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;   /* IE / Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari / Opera */
+}
