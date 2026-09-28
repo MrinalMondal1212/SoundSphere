@@ -19,7 +19,7 @@ import {
 const mainNavItems = [
   { label: 'Home',    icon: Home,    path: '/' },
   { label: 'Discover', icon: Compass, path: '/discover' },
-  { label: 'Albums',  icon: Disc3,   path: '/albums' },
+  { label: 'Album',  icon: Disc3,   path: '/album' },
   { label: 'Artists', icon: Mic2,    path: '/artists' },
 ]
 
