@@ -9,6 +9,8 @@ import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import HomePage from "../pages/HomePage";
 import Artist from "../pages/Artist";
+import ArtistDashboard from "../pages/ArtistDashboard";
+import AdminDashboard from "../pages/AdminDashboard";
 
 const Routing = createBrowserRouter([
   {
@@ -23,10 +25,11 @@ const Routing = createBrowserRouter([
         path: "discover",
         element: <DiscoverPage />,
       },
-       {
-    path: "/album",
-    element: <AlbumsPage />,
-  },
+
+      {
+        path: "/album",
+        element: <AlbumsPage />,
+      },
     ],
   },
 
@@ -42,7 +45,14 @@ const Routing = createBrowserRouter([
     path: "/song",
     element: <SongPage />,
   },
- 
+  {
+    path: "/artistDashboard",
+    element: <ArtistDashboard />,
+  },
+  {
+    path : "/admindashboard",
+    element : <AdminDashboard />
+  }
 ]);
 
 export default Routing;
