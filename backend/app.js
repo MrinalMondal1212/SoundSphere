@@ -1,9 +1,14 @@
 require('dotenv').config();
 const express=require('express');
+const cors=require('cors');
 
 const DBConnect=require('./src/config/dbCon')
 
 const app=express();
+
+// Add CORS middleware before other middleware
+app.use(cors());
+
 DBConnect()
 
 app.use(express.json())
