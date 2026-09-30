@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
 import {
@@ -12,8 +12,13 @@ import {
   clearRegisterSuccess,
 } from '../../store/authSlice'
 
-export default function Register() {
+/**
+ * Register page for regular users.
+ * On success: shows success message and redirects to /login after a brief delay.
+ */
+export default function RegisterPage() {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const loading = useSelector(selectLoading)
   const error = useSelector(selectError)
   const registerSuccess = useSelector(selectRegisterSuccess)
@@ -30,6 +35,17 @@ export default function Register() {
 
   const passwordValue = watch('password')
 
+  // Redirect to login after successful registration
+  useEffect(() => {
+    if (registerSuccess) {
+      const timer = setTimeout(() => {
+        dispatch(clearRegisterSuccess())
+        navigate('/login')
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [registerSuccess, dispatch, navigate])
+
   // Clear stale errors on unmount
   useEffect(() => {
     return () => { dispatch(clearError()) }
@@ -37,22 +53,22 @@ export default function Register() {
 
   const onSubmit = (data) => {
     dispatch(registerUser({
-      name: data.fullName,
+      name: data.name,
       email: data.email,
       password: data.password,
       role: 'user',
     }))
   }
 
-  // Success state (will stay here, and let the user slide back to login or we could force a page reload)
+  // Success state
   if (registerSuccess) {
     return (
-      <div className="h-full w-full flex items-center justify-center p-8">
-        <div className="text-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 text-center shadow-xl">
           <CheckCircle size={56} className="mx-auto text-success mb-4" />
           <h2 className="text-2xl font-extrabold text-text mb-2">Account Created!</h2>
           <p className="text-text-secondary text-sm">
-            Your account has been created successfully. <br/> Please slide back to log in.
+            Your account has been created successfully. Redirecting to login...
           </p>
         </div>
       </div>
@@ -60,18 +76,18 @@ export default function Register() {
   }
 
   return (
-    <div className="h-full w-full flex items-center justify-center px-8 py-5 overflow-y-auto">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 shadow-xl">
 
         {/* Logo */}
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-5">
           <div className="px-4 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30">
-            <span className="text-lg font-bold">SoundSphere</span>
+            <span className="text-xl font-bold">SoundSphere</span>
           </div>
         </div>
 
         {/* Heading */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-extrabold text-text tracking-tight">
             Create Account
           </h1>
@@ -88,7 +104,7 @@ export default function Register() {
         )}
 
         {/* Register Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
           {/* Full Name */}
           <div>
@@ -100,12 +116,12 @@ export default function Register() {
               <input
                 type="text"
                 placeholder="John Doe"
-                {...register('fullName', { required: 'Full name is required' })}
+                {...register('name', { required: 'Full name is required' })}
                 className="w-full bg-card border border-border rounded-lg py-2.5 pl-9 pr-3 text-sm text-text placeholder-text-muted focus:outline-none focus:border-primary transition-all"
               />
             </div>
-            {errors.fullName && (
-              <p className="text-danger text-xs mt-1">{errors.fullName.message}</p>
+            {errors.name && (
+              <p className="text-danger text-xs mt-1">{errors.name.message}</p>
             )}
           </div>
 
@@ -175,7 +191,8 @@ export default function Register() {
                 placeholder="Confirm your password"
                 {...register('confirmPassword', {
                   required: 'Please confirm your password',
-                  validate: (value) => value === passwordValue || 'Passwords do not match',
+                  validate: (value) =>
+                    value === passwordValue || 'Passwords do not match',
                 })}
                 className="w-full bg-card border border-border rounded-lg py-2.5 pl-9 pr-10 text-sm text-text placeholder-text-muted focus:outline-none focus:border-primary transition-all"
               />
@@ -192,32 +209,16 @@ export default function Register() {
             )}
           </div>
 
-          {/* Terms */}
-          <div className="flex items-start gap-2 pt-1">
-            <input
-              type="checkbox"
-              required
-              id="terms"
-              className="w-3.5 h-3.5 mt-0.5 rounded border-border cursor-pointer accent-primary"
-            />
-            <label
-              htmlFor="terms"
-              className="text-[11px] text-text-secondary cursor-pointer select-none leading-4"
-            >
-              I agree to the <span className="text-primary hover:underline">Terms of Service</span> and <span className="text-primary hover:underline">Privacy Policy</span>.
-            </label>
-          </div>
-
           {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
           >
             {loading ? (
               <>
                 <Loader2 size={15} className="animate-spin" />
-                <span>Creating...</span>
+                <span>Creating Account...</span>
               </>
             ) : (
               <>
@@ -226,9 +227,26 @@ export default function Register() {
               </>
             )}
           </button>
+
         </form>
+
+        {/* Links */}
+        <div className="mt-5 text-center space-y-2">
+          <p className="text-sm text-text-secondary">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary font-semibold hover:underline">
+              Sign In
+            </Link>
+          </p>
+          <p className="text-sm text-text-secondary">
+            Are you an artist?{' '}
+            <Link to="/register-artist" className="text-primary font-semibold hover:underline">
+              Register as Artist
+            </Link>
+          </p>
+        </div>
 
       </div>
     </div>
-  );
+  )
 }

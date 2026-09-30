@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import {
   Home,
   Compass,
@@ -12,7 +13,9 @@ import {
   Settings,
   LogOut,
   Radio,
+  LayoutDashboard,
 } from 'lucide-react'
+import { selectIsAuthenticated } from '../store/authSlice'
 
 // ─── Navigation Data ────────────────────────────────────────────────────────
 
@@ -58,6 +61,8 @@ const NavItem = ({ item }) => (
 // ─── Sidebar Component ───────────────────────────────────────────────────────
 
 const Navbar = () => {
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+
   return (
     <aside className="w-[220px] fixed left-0 top-0 h-screen bg-surface flex flex-col border-r border-border z-50 overflow-y-auto">
       {/* Logo */}
@@ -73,6 +78,23 @@ const Navbar = () => {
         {mainNavItems.map((item) => (
           <NavItem key={item.path} item={item} />
         ))}
+
+        {/* Dashboard link — only shown when logged in */}
+        {isAuthenticated && (
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'text-primary bg-primary/10'
+                  : 'text-text-secondary hover:text-text hover:bg-card'
+              }`
+            }
+          >
+            <LayoutDashboard size={17} />
+            <span>Dashboard</span>
+          </NavLink>
+        )}
       </div>
 
       {/* Divider */}

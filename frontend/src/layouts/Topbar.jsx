@@ -1,6 +1,12 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Search, User } from "lucide-react";
+import { NavLink, useNavigate, Link } from "react-router-dom";
+import { Search, User, LogOut, LayoutDashboard } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectUser,
+  selectIsAuthenticated,
+  logout,
+} from "../store/authSlice";
 
 // Top navigation tabs
 const topTabs = [
@@ -11,20 +17,26 @@ const topTabs = [
 ];
 
 const Topbar = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [isDark, setIsDark] = useState(true);
   const [search, setSearch] = useState("");
 
-  const navigate = useNavigate();
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  // Profile button click
+  // Logout: dispatch action + redirect to /login
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
+
+  // Profile button click — navigate to /dashboard if logged in
   const handleProfileClick = () => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      // User is logged in
-      navigate("/profile");
+    if (isAuthenticated) {
+      navigate("/dashboard");
     } else {
-      // User is not logged in
       navigate("/login");
     }
   };
@@ -35,7 +47,6 @@ const Topbar = () => {
       {/* Search */}
       <div className="flex items-center bg-card border border-border rounded-lg px-3 py-2 gap-2 w-52 flex-shrink-0">
         <Search size={15} className="text-text-muted flex-shrink-0" />
-
         <input
           type="text"
           placeholder="Search songs, artists..."
@@ -66,14 +77,11 @@ const Topbar = () => {
       </nav>
 
       {/* Right Side */}
-      <div className="flex items-center gap-4 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0">
 
         {/* Dark Mode Toggle */}
         <div className="flex items-center gap-2">
-          <span className="text-text-muted text-xs select-none">
-            Dark
-          </span>
-
+          <span className="text-text-muted text-xs select-none">Dark</span>
           <button
             onClick={() => setIsDark(!isDark)}
             aria-label="Toggle dark mode"
@@ -89,19 +97,42 @@ const Topbar = () => {
           </button>
         </div>
 
-        {/* User Profile Button */}
-        <button
-          onClick={handleProfileClick}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
-        >
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
-            <User size={13} className="text-white" />
-          </div>
+        {isAuthenticated && user ? (
+          <>
+            {/* Dashboard Link */}
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                {user.name?.[0]?.toUpperCase() || <User size={13} />}
+              </div>
+              <span className="text-sm text-text-secondary font-medium">
+                {user.name}
+              </span>
+            </button>
 
-          <span className="text-sm text-text-secondary font-medium">
-            Profile
-          </span>
-        </button>
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card border border-border hover:border-danger/50 hover:text-danger text-text-secondary transition-colors text-sm"
+            >
+              <LogOut size={15} />
+              <span className="hidden md:inline font-medium">Logout</span>
+            </button>
+          </>
+        ) : (
+          /* Login Button — shown when not authenticated */
+          <Link
+            to="/login"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all shadow-lg shadow-primary/25"
+          >
+            <User size={14} />
+            Login
+          </Link>
+        )}
+
       </div>
     </header>
   );
