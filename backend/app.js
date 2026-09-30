@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express=require('express');
+const cors = require('cors');
 
 const DBConnect=require('./src/config/dbCon')
 
 const app=express();
+app.use(cors());
 DBConnect()
 
 app.use(express.json())
@@ -18,9 +20,9 @@ app.use('/api', adminRoute)
 //artist api
 const artistRoute = require("./src/router/artistRoute")
 app.use("/api", artistRoute)
-//uesr api 
 
-
+const songRoute = require("./src/router/songRoute")
+app.use("/api", songRoute)
 
 
 const Port=process.env.PORT || 3009

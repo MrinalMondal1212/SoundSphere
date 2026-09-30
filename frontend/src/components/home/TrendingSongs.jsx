@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Heart, Play, Clock } from 'lucide-react'
+import { useDispatch } from 'react-redux'
+import { playSong } from '../../store/playerSlice'
 
 const MINI_GRADIENTS = [
   'from-pink-500 to-rose-700',
@@ -17,8 +19,8 @@ const MINI_GRADIENTS = [
  * Response shape: Song model + populated artistId + extra fields (rank, album, releaseDate, duration)
  */
 const trendingSongs = [
-  { _id: 't1', rank: 1, title: 'Starfire',       artistId: { _id: 'a1', name: 'Thunder Beats' }, coverImageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=80&q=80',  releaseDate: 'Mar 11, 2025', album: 'Starfire Galaxy',           duration: '3:29' },
-  { _id: 't2', rank: 2, title: 'Digital Beats',  artistId: { _id: 'a2', name: 'Digital Wave'  }, coverImageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&q=80',  releaseDate: 'Apr 5,  2025', album: 'Frequency',                 duration: '4:12' },
+  { _id: 't1', rank: 1, title: 'Starfire',       artistId: { _id: 'a1', name: 'Thunder Beats' }, coverImageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=80&q=80',  releaseDate: 'Mar 11, 2025', album: 'Starfire Galaxy',           duration: '3:29', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { _id: 't2', rank: 2, title: 'Digital Beats',  artistId: { _id: 'a2', name: 'Digital Wave'  }, coverImageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&q=80',  releaseDate: 'Apr 5,  2025', album: 'Frequency',                 duration: '4:12', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
   { _id: 't3', rank: 3, title: 'Groovy',          artistId: { _id: 'a3', name: 'Luna Sky'      }, coverImageUrl: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=80&q=80',  releaseDate: 'Feb 28, 2025', album: 'Night Owl',                 duration: '3:45' },
   { _id: 't4', rank: 4, title: 'Love This Time',  artistId: { _id: 'a4', name: 'Volt Echo'     }, coverImageUrl: 'https://images.unsplash.com/photo-1598387993281-cecf8b71a8f8?w=80&q=80',  releaseDate: 'Feb 20, 2025', album: 'Echoes of Time',            duration: '4:00' },
   { _id: 't5', rank: 5, title: 'Join the Summer', artistId: { _id: 'a5', name: 'Skyline Drift' }, coverImageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=80&q=80',  releaseDate: 'May 17, 2025', album: 'The Night (Of the Summer)', duration: '3:55' },
@@ -31,9 +33,11 @@ const trendingSongs = [
 const TrendingRow = ({ song, index }) => {
   const [liked,     setLiked]     = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const dispatch = useDispatch()
 
   return (
     <div
+      onClick={() => dispatch(playSong(song))}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="grid items-center gap-4 px-4 py-3 rounded-xl hover:bg-card transition-colors cursor-pointer"
@@ -61,20 +65,20 @@ const TrendingRow = ({ song, index }) => {
         </div>
         <div className="min-w-0">
           <p className="text-text text-sm font-medium truncate">{song.title}</p>
-          <p className="text-text-muted text-xs truncate">{song.artistId.name}</p>
+          <p className="text-text-muted text-xs truncate">{song.artistId?.name || 'Unknown Artist'}</p>
         </div>
       </div>
 
       {/* Release Date */}
-      <p className="text-text-secondary text-xs truncate">{song.releaseDate}</p>
+      <p className="text-text-secondary text-xs truncate">{song.releaseDate || (song.createdAt ? new Date(song.createdAt).toDateString() : 'Unknown')}</p>
 
       {/* Album */}
-      <p className="text-text-secondary text-xs truncate">{song.album}</p>
+      <p className="text-text-secondary text-xs truncate">{song.album || 'Single'}</p>
 
       {/* Duration */}
       <div className="flex items-center gap-1 text-text-muted text-xs">
         <Clock size={11} />
-        <span>{song.duration}</span>
+        <span>{song.duration || '--:--'}</span>
       </div>
 
       {/* Like */}
@@ -94,7 +98,7 @@ const TrendingRow = ({ song, index }) => {
 
 // ─── Section ─────────────────────────────────────────────────────────────────
 
-const TrendingSongs = () => {
+const TrendingSongs = ({ songs = [] }) => {
   return (
     <section className="mt-10">
       <h2 className="text-base font-bold text-text mb-5">
@@ -118,9 +122,15 @@ const TrendingSongs = () => {
 
       {/* Rows */}
       <div className="flex flex-col gap-0.5">
-        {trendingSongs.map((song, index) => (
-          <TrendingRow key={song._id} song={song} index={index} />
-        ))}
+        {songs.length > 0 ? (
+          songs.map((song, index) => (
+            <TrendingRow key={song._id} song={{ ...song, rank: index + 1 }} index={index} />
+          ))
+        ) : (
+          <div className="py-10 text-center text-text-muted text-sm">
+            No trending songs found.
+          </div>
+        )}
       </div>
 
       {/* View All */}

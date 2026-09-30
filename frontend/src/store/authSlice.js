@@ -57,6 +57,20 @@ export const registerUser = createAsyncThunk(
   }
 )
 
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (profileData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put('/updateProfile', profileData)
+      return res.data.data // { id, name, email, role }
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Profile update failed.'
+      )
+    }
+  }
+)
+
 // ─── Slice ────────────────────────────────────────────────────────────────────
 
 const authSlice = createSlice({
@@ -123,6 +137,21 @@ const authSlice = createSlice({
         state.loading = false
         state.error = action.payload
         state.registerSuccess = false
+      })
+
+    // ── Update Profile ────────────────────────────────────────────────────────
+    builder
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = { ...state.user, ...action.payload }
+        localStorage.setItem('user', JSON.stringify(state.user))
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
       })
   },
 })

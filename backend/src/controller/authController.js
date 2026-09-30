@@ -146,6 +146,38 @@ class AuthController {
         }
     }
 
+    static async updateProfile(req, res) {
+        try {
+            const { name } = req.body;
+            const updatedUser = await userModel.findByIdAndUpdate(
+                req.user.id,
+                { name },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Profile updated successfully",
+                data: {
+                    id: updatedUser._id,
+                    name: updatedUser.name,
+                    email: updatedUser.email,
+                    role: updatedUser.role
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal Server Error !!"
+            });
+        }
+    }
+
 }
 
 module.exports = AuthController

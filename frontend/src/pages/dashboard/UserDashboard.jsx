@@ -1,5 +1,6 @@
-import { useSelector } from 'react-redux'
-import { selectUser } from '../../store/authSlice'
+import { useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectUser, updateProfile } from '../../store/authSlice'
 import { Music2, Mail, Shield, Headphones } from 'lucide-react'
 
 /**
@@ -7,7 +8,17 @@ import { Music2, Mail, Shield, Headphones } from 'lucide-react'
  * Protected by ProtectedRoute in Routing.jsx.
  */
 export default function UserDashboard() {
+  const dispatch = useDispatch()
   const user = useSelector(selectUser)
+  const [isEditing, setIsEditing] = useState(false)
+  const [newName, setNewName] = useState(user?.name || '')
+
+  const handleUpdateProfile = () => {
+    if (newName.trim() !== '' && newName !== user?.name) {
+      dispatch(updateProfile({ name: newName }))
+    }
+    setIsEditing(false)
+  }
 
   return (
     <div className="min-h-screen bg-background text-text p-6 md:p-10">
@@ -30,9 +41,40 @@ export default function UserDashboard() {
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
               {user?.name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-text">{user?.name}</h2>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <div className="flex-1">
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="bg-card border border-border rounded-lg p-1.5 text-sm text-text focus:outline-none focus:border-primary transition-all w-full max-w-[200px]"
+                  />
+                  <button 
+                    onClick={handleUpdateProfile}
+                    className="text-xs bg-primary text-white px-2 py-1 rounded"
+                  >
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => setIsEditing(false)}
+                    className="text-xs bg-card text-text-secondary px-2 py-1 rounded border border-border"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-text">{user?.name}</h2>
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 inline-block mt-1">
                 {user?.role?.toUpperCase()}
               </span>
             </div>

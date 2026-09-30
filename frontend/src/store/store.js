@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './authSlice'
 import adminReducer from './adminSlice'
 import artistReducer from './artistSlice'
+import playerReducer from './playerSlice'
 
 /**
  * Redux store — combines auth, admin, and artist slices.
@@ -12,6 +13,7 @@ const store = configureStore({
     auth: authReducer,
     admin: adminReducer,
     artist: artistReducer,
+    player: playerReducer,
   },
 })
 

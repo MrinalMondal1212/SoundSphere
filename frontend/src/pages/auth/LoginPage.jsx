@@ -27,7 +27,7 @@ export default function Login() {
   // If already logged in, redirect to dashboard
   useEffect(() => {
     if (user) {
-      navigate('/dashboard', { replace: true })
+      navigate('/', { replace: true })
     }
   }, [user, navigate])
 
@@ -39,7 +39,7 @@ export default function Login() {
   const onSubmit = async (data) => {
     const result = await dispatch(loginUser(data))
     if (loginUser.fulfilled.match(result)) {
-      navigate('/dashboard', { replace: true })
+      navigate('/', { replace: true })
     }
   }
 

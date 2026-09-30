@@ -12,14 +12,18 @@ import {
   Image,
   FileText,
   Disc3,
+  Play,
+  Pencil,
 } from 'lucide-react'
 import { selectUser } from '../../store/authSlice'
 import {
   fetchMySongs,
   createSong,
   deleteSong,
+  updateSong,
   clearArtistError,
 } from '../../store/artistSlice'
+import { playSong } from '../../store/playerSlice'
 
 /**
  * ArtistDashboard — accessible to users with role 'artist'.
@@ -38,6 +42,7 @@ export default function ArtistDashboard() {
   const { songs, loading, error } = useSelector((state) => state.artist)
 
   const [showForm, setShowForm] = useState(false)
+  const [editingSong, setEditingSong] = useState(null)
   // Track whether the artist got a 403 (not approved)
   const [notApproved, setNotApproved] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -46,6 +51,7 @@ export default function ArtistDashboard() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm()
 
@@ -63,8 +69,32 @@ export default function ArtistDashboard() {
     return () => { dispatch(clearArtistError()) }
   }, [dispatch])
 
+  const handleEditClick = (song) => {
+    setEditingSong(song)
+    setValue('title', song.title)
+    setValue('description', song.description)
+    setShowForm(true)
+  }
+
   const onUpload = async (data) => {
-    const result = await dispatch(createSong(data))
+    if (editingSong) {
+      const updateData = { title: data.title, description: data.description }
+      const result = await dispatch(updateSong({ id: editingSong._id, data: updateData }))
+      if (updateSong.fulfilled.match(result)) {
+        reset()
+        setShowForm(false)
+        setEditingSong(null)
+      }
+      return
+    }
+
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    if (data.audio && data.audio[0]) formData.append('audio', data.audio[0]);
+    if (data.coverImage && data.coverImage[0]) formData.append('coverImage', data.coverImage[0]);
+
+    const result = await dispatch(createSong(formData))
     if (createSong.fulfilled.match(result)) {
       reset()
       setShowForm(false)
@@ -203,11 +233,26 @@ export default function ArtistDashboard() {
                         </a>
                       ) : '—'}
                     </td>
-                    <td className="py-3 px-5 text-right">
+                    <td className="py-3 px-5 text-right space-x-2">
+                      <button
+                        onClick={() => dispatch(playSong(song))}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                        title="Play"
+                      >
+                        <Play size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleEditClick(song)}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil size={16} />
+                      </button>
                       <button
                         onClick={() => handleDelete(song._id)}
                         disabled={deletingId === song._id}
                         className="p-2 rounded-lg hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
+                        title="Delete"
                       >
                         {deletingId === song._id
                           ? <Loader2 size={16} className="animate-spin" />
@@ -230,10 +275,10 @@ export default function ArtistDashboard() {
             <div className="flex items-center justify-between border-b border-border pb-4 mb-5">
               <h3 className="text-lg font-bold text-text flex items-center gap-2">
                 <Music size={18} className="text-primary" />
-                Upload New Song
+                {editingSong ? 'Edit Song' : 'Upload New Song'}
               </h3>
               <button
-                onClick={() => { setShowForm(false); reset(); dispatch(clearArtistError()) }}
+                onClick={() => { setShowForm(false); setEditingSong(null); reset(); dispatch(clearArtistError()) }}
                 className="text-text-muted hover:text-text transition-colors"
               >
                 <X size={20} />
@@ -279,42 +324,46 @@ export default function ArtistDashboard() {
                 />
               </div>
 
-              {/* Audio URL */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
-                  <Link2 size={12} />
-                  Audio URL *
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/song.mp3"
-                  {...register('audioUrl', { required: 'Audio URL is required' })}
-                  className="w-full bg-card border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary transition-all"
-                />
-                {errors.audioUrl && (
-                  <p className="text-danger text-xs mt-1">{errors.audioUrl.message}</p>
-                )}
-              </div>
+              {/* Audio File */}
+              {!editingSong && (
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
+                    <Link2 size={12} />
+                    Audio File *
+                  </label>
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    {...register('audio', { required: 'Audio file is required' })}
+                    className="w-full bg-card border border-border rounded-xl p-2 text-sm text-text focus:outline-none focus:border-primary transition-all"
+                  />
+                  {errors.audio && (
+                    <p className="text-danger text-xs mt-1">{errors.audio.message}</p>
+                  )}
+                </div>
+              )}
 
-              {/* Cover Image URL */}
-              <div>
-                <label className="text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
-                  <Image size={12} />
-                  Cover Image URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/cover.jpg"
-                  {...register('coverImageUrl')}
-                  className="w-full bg-card border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
+              {/* Cover Image File */}
+              {!editingSong && (
+                <div>
+                  <label className="text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
+                    <Image size={12} />
+                    Cover Image File *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    {...register('coverImage', { required: 'Cover image file is required' })}
+                    className="w-full bg-card border border-border rounded-xl p-2 text-sm text-text focus:outline-none focus:border-primary transition-all"
+                  />
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-2 border-t border-border">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); reset(); dispatch(clearArtistError()) }}
+                  onClick={() => { setShowForm(false); setEditingSong(null); reset(); dispatch(clearArtistError()) }}
                   className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-card text-text-secondary hover:text-text transition-colors"
                 >
                   Cancel
@@ -325,9 +374,9 @@ export default function ArtistDashboard() {
                   className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                 >
                   {loading ? (
-                    <><Loader2 size={14} className="animate-spin" /> Uploading...</>
+                    <><Loader2 size={14} className="animate-spin" /> {editingSong ? 'Saving...' : 'Uploading...'}</>
                   ) : (
-                    'Upload Song'
+                    editingSong ? 'Save Changes' : 'Upload Song'
                   )}
                 </button>
               </div>

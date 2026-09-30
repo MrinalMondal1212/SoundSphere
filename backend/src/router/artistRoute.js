@@ -3,6 +3,7 @@ const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const statusCode = require("../utils/statusCode");
 const artistController = require("../controller/artistController");
+const upload = require("../middleware/upload");
 
 const route = express.Router();
 
@@ -27,6 +28,7 @@ route.post(
     "/artist/createSong",
     authMiddleware.verifyToken,
     authMiddleware.roleCheck("artist"),
+    upload.fields([{ name: 'audio' }, { name: 'coverImage' }]),
     artistController.createSong
 );
 
@@ -57,5 +59,12 @@ route.delete(
     artistController.deleteSong
 );
 
+// UPDATE SONG
+route.put(
+    "/artist/updateSong/:id",
+    authMiddleware.verifyToken,
+    authMiddleware.roleCheck("artist"),
+    artistController.updateSong
+);
 
 module.exports = route;

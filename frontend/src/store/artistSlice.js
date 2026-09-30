@@ -25,9 +25,11 @@ export const fetchMySongs = createAsyncThunk(
  */
 export const createSong = createAsyncThunk(
   'artist/createSong',
-  async (songData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post('/artist/createSong', songData)
+      const res = await axiosInstance.post('/artist/createSong', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
       return res.data.data // Created Song
     } catch (err) {
       if (err.response?.status === 403) {
@@ -52,6 +54,21 @@ export const deleteSong = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message || 'Failed to delete song.'
+      )
+    }
+  }
+)
+
+/** PUT /artist/updateSong/:id — update a song title and description */
+export const updateSong = createAsyncThunk(
+  'artist/updateSong',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put(`/artist/updateSong/${id}`, data)
+      return res.data.data // Updated Song
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to update song.'
       )
     }
   }
@@ -98,6 +115,25 @@ const artistSlice = createSlice({
         state.songs = [action.payload, ...state.songs]
       })
       .addCase(createSong.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+
+    // ── Update Song ───────────────────────────────────────────────────────────
+    builder
+      .addCase(updateSong.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateSong.fulfilled, (state, action) => {
+        state.loading = false
+        const updated = action.payload
+        const index = state.songs.findIndex((s) => s._id === updated._id)
+        if (index !== -1) {
+          state.songs[index] = updated
+        }
+      })
+      .addCase(updateSong.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
