@@ -24,6 +24,8 @@ import {
   clearArtistError,
 } from '../../store/artistSlice'
 import { playSong } from '../../store/playerSlice'
+import DashboardLayout from '../../layouts/DashboardLayout'
+import toast from 'react-hot-toast'
 
 /**
  * ArtistDashboard — accessible to users with role 'artist'.
@@ -43,7 +45,6 @@ export default function ArtistDashboard() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingSong, setEditingSong] = useState(null)
-  // Track whether the artist got a 403 (not approved)
   const [notApproved, setNotApproved] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
 
@@ -55,11 +56,9 @@ export default function ArtistDashboard() {
     formState: { errors },
   } = useForm()
 
-  // Fetch songs on mount; if 403, mark as not approved
   useEffect(() => {
     dispatch(fetchMySongs()).then((result) => {
       if (fetchMySongs.rejected.match(result)) {
-        // Could be 403 (not approved) or other error
         const msg = result.payload || ''
         if (msg.toLowerCase().includes('approv') || msg.toLowerCase().includes('403')) {
           setNotApproved(true)
@@ -73,37 +72,44 @@ export default function ArtistDashboard() {
     setEditingSong(song)
     setValue('title', song.title)
     setValue('description', song.description)
+    setValue('category', song.category || 'Other')
     setShowForm(true)
   }
 
   const onUpload = async (data) => {
     if (editingSong) {
-      const updateData = { title: data.title, description: data.description }
+      const updateData = { title: data.title, description: data.description, category: data.category }
       const result = await dispatch(updateSong({ id: editingSong._id, data: updateData }))
       if (updateSong.fulfilled.match(result)) {
+        toast.success('Song updated successfully!')
         reset()
         setShowForm(false)
         setEditingSong(null)
+      } else {
+        toast.error('Failed to update song.')
       }
       return
     }
 
-    const formData = new FormData();
-    formData.append('title', data.title);
-    if (data.description) formData.append('description', data.description);
-    if (data.audio && data.audio[0]) formData.append('audio', data.audio[0]);
-    if (data.coverImage && data.coverImage[0]) formData.append('coverImage', data.coverImage[0]);
+    const formData = new FormData()
+    formData.append('title', data.title)
+    formData.append('category', data.category || 'Other')
+    if (data.description) formData.append('description', data.description)
+    if (data.audio && data.audio[0]) formData.append('audio', data.audio[0])
+    if (data.coverImage && data.coverImage[0]) formData.append('coverImage', data.coverImage[0])
 
     const result = await dispatch(createSong(formData))
     if (createSong.fulfilled.match(result)) {
+      toast.success('Song uploaded successfully! 🎵')
       reset()
       setShowForm(false)
     } else if (createSong.rejected.match(result)) {
-      // Check if 403 (not approved)
       const msg = result.payload || ''
       if (msg.toLowerCase().includes('approv') || msg.toLowerCase().includes('pending')) {
         setNotApproved(true)
         setShowForm(false)
+      } else {
+        toast.error('Upload failed. Please try again.')
       }
     }
   }
@@ -111,46 +117,40 @@ export default function ArtistDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this song?')) return
     setDeletingId(id)
-    await dispatch(deleteSong(id))
+    const result = await dispatch(deleteSong(id))
     setDeletingId(null)
+    if (deleteSong.fulfilled.match(result)) {
+      toast.success('Song deleted.')
+    } else {
+      toast.error('Failed to delete song.')
+    }
   }
 
   // ── Pending Approval State ─────────────────────────────────────────────────
   if (notApproved) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 text-center shadow-xl">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
-            <Clock size={32} className="text-primary" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-text mb-2">
-            Pending Approval
-          </h2>
-          <p className="text-text-secondary text-sm leading-6 mb-4">
-            Hi <span className="text-primary font-semibold">{user?.name}</span>, your artist account
-            is currently under review. An admin will approve your account before you can upload songs.
-          </p>
-          <div className="bg-card border border-border rounded-xl p-4 text-left space-y-2">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
-              Account submitted for review
+      <DashboardLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center p-6">
+          <div className="w-full max-w-md bg-surface border border-border rounded-2xl p-8 text-center shadow-xl">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+              <Clock size={32} className="text-primary" />
             </div>
-            <div className="flex items-center gap-2 text-sm text-text-muted">
-              <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
-              Waiting for admin approval
-            </div>
-            <div className="flex items-center gap-2 text-sm text-text-muted">
-              <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
-              Upload your first song
-            </div>
+            <h2 className="text-2xl font-extrabold text-text mb-2">
+              Pending Approval
+            </h2>
+            <p className="text-text-secondary text-sm leading-6 mb-4">
+              Hi <span className="text-primary font-semibold">{user?.name}</span>, your artist account
+              is currently under review. An admin will approve your account before you can upload songs.
+            </p>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   // ── Approved Dashboard ─────────────────────────────────────────────────────
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-background text-text p-6 md:p-10">
 
       {/* Header */}
@@ -310,6 +310,25 @@ export default function ArtistDashboard() {
                 )}
               </div>
 
+              {/* Category */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary mb-1.5 block">
+                  Category *
+                </label>
+                <select
+                  {...register('category')}
+                  className="w-full bg-card border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary transition-all"
+                >
+                  <option value="Pop">Pop</option>
+                  <option value="Classical">Classical</option>
+                  <option value="Hip-Hop">Hip-Hop</option>
+                  <option value="Rock">Rock</option>
+                  <option value="Jazz">Jazz</option>
+                  <option value="Electronic">Electronic</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
               {/* Description */}
               <div>
                 <label className="text-xs font-semibold text-text-secondary mb-1.5 flex items-center gap-1.5">
@@ -387,5 +406,6 @@ export default function ArtistDashboard() {
       )}
 
     </div>
+  </DashboardLayout>
   )
 }

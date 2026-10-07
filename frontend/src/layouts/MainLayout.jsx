@@ -18,8 +18,6 @@ const MainLayout = () => {
         </main>
         <Footer />
       </div>
-
-      <GlobalPlayer />
     </div>
   )
 }

@@ -24,6 +24,12 @@ const songSchema = new mongoose.Schema(
       required: true,
     },
 
+    category: {
+      type: String,
+      enum: ['Pop', 'Classical', 'Hip-Hop', 'Rock', 'Jazz', 'Electronic', 'Other'],
+      default: 'Other',
+    },
+
     coverImageUrl: {
       type: String,
       default: null,

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import axiosInstance from '../services/axiosInstance'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchAllSongs } from '../store/songSlice'
 import HeroSection      from '../components/Home/HeroSection'
 import WeeklyTopSongs   from '../components/Home/WeeklyTopSongs'
 import NewReleaseSongs  from '../components/Home/NewReleaseSongs'
@@ -16,29 +17,19 @@ import JoinPlatform     from '../components/Home/JoinPlatform'
  * Each section handles its own data fetching once the backend is connected.
  */
 const HomePage = () => {
-  const [songs, setSongs] = useState([])
+  const dispatch = useDispatch()
+  const { publicSongs } = useSelector((state) => state.song)
 
   useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const res = await axiosInstance.get('/songs')
-        setSongs(res.data.data || [])
-      } catch (err) {
-        console.error('Error fetching songs:', err)
-      }
-    }
-    fetchSongs()
-  }, [])
+    dispatch(fetchAllSongs())
+  }, [dispatch])
 
   return (
     <div className="max-w-[1300px]">
       <HeroSection />
-      <WeeklyTopSongs />
-      <NewReleaseSongs />
-      <TrendingSongs songs={songs} />
-      <PremiumOffers />
-      <TopAlbums />
-      <MoodPlaylist />
+      <WeeklyTopSongs songs={publicSongs} />
+      <NewReleaseSongs songs={publicSongs} />
+      <TrendingSongs songs={publicSongs} />
       <JoinPlatform />
     </div>
   )

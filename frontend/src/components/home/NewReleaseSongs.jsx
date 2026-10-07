@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { Play, Heart, Zap } from 'lucide-react'
+import { useDispatch } from 'react-redux'
+import { playSong } from '../../store/playerSlice'
+import { toggleLike } from '../../store/songSlice'
 
 const CARD_GRADIENTS = [
   'from-blue-600 via-indigo-700 to-purple-800',
@@ -10,23 +13,10 @@ const CARD_GRADIENTS = [
   'from-rose-500 via-pink-600 to-fuchsia-700',
 ]
 
-/**
- * TODO: Replace with API call
- * GET /api/songs/new-releases
- * Response shape matches Song model (populated artistId)
- */
-const newReleaseSongs = [
-  { _id: 'nr1', title: 'Chaos Theory',   artistId: { _id: 'a7',  name: 'Static Pulse' }, coverImageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&q=80', audioUrl: null, createdAt: '2025-09-20' },
-  { _id: 'nr2', title: 'Solar Flare',    artistId: { _id: 'a8',  name: 'Nova Beat'    }, coverImageUrl: 'https://images.unsplash.com/photo-1504898770365-14faca6a7320?w=300&q=80', audioUrl: null, createdAt: '2025-09-22' },
-  { _id: 'nr3', title: 'Dark Matter',    artistId: { _id: 'a9',  name: 'Void Walker'  }, coverImageUrl: 'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=300&q=80', audioUrl: null, createdAt: '2025-09-24' },
-  { _id: 'nr4', title: 'Crimson Tide',   artistId: { _id: 'a10', name: 'Red Echo'     }, coverImageUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&q=80', audioUrl: null, createdAt: '2025-09-25' },
-  { _id: 'nr5', title: 'Frozen Horizon', artistId: { _id: 'a11', name: 'Arctic Tone'  }, coverImageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=300&q=80', audioUrl: null, createdAt: '2025-09-26' },
-  { _id: 'nr6', title: 'Digital Rain',   artistId: { _id: 'a12', name: 'Cyber Flow'   }, coverImageUrl: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=300&q=80', audioUrl: null, createdAt: '2025-09-27' },
-]
-
 // ─── Card ────────────────────────────────────────────────────────────────────
 
 const NewReleaseCard = ({ song, index }) => {
+  const dispatch = useDispatch()
   const [liked, setLiked] = useState(false)
 
   const formattedDate = new Date(song.createdAt).toLocaleDateString('en-US', {
@@ -34,8 +24,17 @@ const NewReleaseCard = ({ song, index }) => {
     day: 'numeric',
   })
 
+  const handleLike = (e) => {
+    e.stopPropagation()
+    setLiked(!liked)
+    dispatch(toggleLike(song._id))
+  }
+
   return (
-    <div className="min-w-[155px] max-w-[155px] group cursor-pointer">
+    <div 
+      className="min-w-[155px] max-w-[155px] group cursor-pointer"
+      onClick={() => dispatch(playSong(song))}
+    >
 
       {/* Cover Art */}
       <div
@@ -60,7 +59,7 @@ const NewReleaseCard = ({ song, index }) => {
 
         {/* Like button */}
         <button
-          onClick={(e) => { e.stopPropagation(); setLiked(!liked) }}
+          onClick={handleLike}
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-black/50 hover:bg-black/70"
         >
           <Heart
@@ -73,7 +72,7 @@ const NewReleaseCard = ({ song, index }) => {
 
       {/* Info */}
       <h4 className="text-text text-sm font-semibold truncate">{song.title}</h4>
-      <p className="text-text-muted text-xs mt-0.5 truncate">{song.artistId.name}</p>
+      <p className="text-text-muted text-xs mt-0.5 truncate">{song.artistId?.name || 'Unknown Artist'}</p>
       <p className="text-text-muted text-xs">{formattedDate}</p>
     </div>
   )
@@ -81,7 +80,11 @@ const NewReleaseCard = ({ song, index }) => {
 
 // ─── Section ─────────────────────────────────────────────────────────────────
 
-const NewReleaseSongs = () => {
+const NewReleaseSongs = ({ songs = [] }) => {
+  // Songs from backend are already sorted by createdAt: -1 (newest first). 
+  // Let's take the first 6 as new releases.
+  const newReleases = songs.slice(0, 6)
+
   return (
     <section className="mt-10">
       <div className="flex items-center justify-between mb-4">
@@ -95,9 +98,13 @@ const NewReleaseSongs = () => {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
-        {newReleaseSongs.map((song, index) => (
-          <NewReleaseCard key={song._id} song={song} index={index} />
-        ))}
+        {newReleases.length > 0 ? (
+          newReleases.map((song, index) => (
+            <NewReleaseCard key={song._id} song={song} index={index} />
+          ))
+        ) : (
+          <p className="text-sm text-text-muted">No new releases found.</p>
+        )}
       </div>
     </section>
   )

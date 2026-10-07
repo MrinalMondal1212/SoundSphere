@@ -21,7 +21,7 @@ class SoundSphereController {
                 });
             }
 
-            const { title, description } = req.body;
+            const { title, description, category } = req.body;
             
             const cloudinary = require("../config/cloudinary");
             const streamifier = require("streamifier");
@@ -53,6 +53,7 @@ class SoundSphereController {
                 artistId: req.user.id,
                 title,
                 description,
+                category: category || 'Other',
                 audioUrl,
                 coverImageUrl
             });
@@ -231,11 +232,14 @@ class SoundSphereController {
                 });
             }
 
-            const { title, description } = req.body;
+            const { title, description, category } = req.body;
+            
+            const updateFields = { title, description };
+            if (category) updateFields.category = category;
             
             const song = await Song.findOneAndUpdate(
                 { _id: req.params.id, artistId: req.user.id },
-                { title, description },
+                updateFields,
                 { new: true }
             );
 

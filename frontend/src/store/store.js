@@ -3,6 +3,7 @@ import authReducer from './authSlice'
 import adminReducer from './adminSlice'
 import artistReducer from './artistSlice'
 import playerReducer from './playerSlice'
+import songReducer from './songSlice'
 
 /**
  * Redux store — combines auth, admin, and artist slices.
@@ -14,6 +15,7 @@ const store = configureStore({
     admin: adminReducer,
     artist: artistReducer,
     player: playerReducer,
+    song: songReducer,
   },
 })
 

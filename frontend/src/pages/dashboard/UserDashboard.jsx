@@ -7,6 +7,8 @@ import { Music2, Mail, Shield, Headphones } from 'lucide-react'
  * UserDashboard — accessible only to users with role 'user'.
  * Protected by ProtectedRoute in Routing.jsx.
  */
+import DashboardLayout from '../../layouts/DashboardLayout'
+
 export default function UserDashboard() {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
@@ -21,6 +23,7 @@ export default function UserDashboard() {
   }
 
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-background text-text p-6 md:p-10">
 
       {/* Header */}
@@ -146,6 +149,7 @@ export default function UserDashboard() {
       </div>
 
     </div>
+    </DashboardLayout>
   )
 }
 

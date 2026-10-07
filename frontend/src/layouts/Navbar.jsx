@@ -1,45 +1,21 @@
-import { NavLink } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Home,
-  Compass,
   Disc3,
   Mic2,
-  Clock,
-  Music2,
-  Heart,
-  ListMusic,
-  Plus,
-  Settings,
-  LogOut,
   Radio,
   LayoutDashboard,
+  LogOut,
+  LogIn,
+  Settings,
+  Music,
+  Library,
 } from 'lucide-react'
-import { selectIsAuthenticated } from '../store/authSlice'
+import { selectIsAuthenticated, selectUser, logout } from '../store/authSlice'
+import toast from 'react-hot-toast'
 
-// ─── Navigation Data ────────────────────────────────────────────────────────
-
-const mainNavItems = [
-  { label: 'Home',    icon: Home,    path: '/' },
-  { label: 'Discover', icon: Compass, path: '/discover' },
-  { label: 'Album',  icon: Disc3,   path: '/album' },
-  { label: 'Artists', icon: Mic2,    path: '/artists' },
-]
-
-const libraryNavItems = [
-  { label: 'Recently Added', icon: Clock,     path: '/recent' },
-  { label: 'Music Player',   icon: Music2,    path: '/player' },
-  { label: 'Your Favorites', icon: Heart,     path: '/favorites' },
-  { label: 'Your Playlist',  icon: ListMusic, path: '/playlist' },
-  { label: 'Add Playlist',   icon: Plus,      path: '/playlist/new' },
-]
-
-const bottomNavItems = [
-  { label: 'Setting', icon: Settings, path: '/settings' },
-  { label: 'Logout',  icon: LogOut,   path: '/logout' },
-]
-
-// ─── NavItem Component ───────────────────────────────────────────────────────
+// ─── NavItem Component ────────────────────────────────────────────────────────
 
 const NavItem = ({ item }) => (
   <NavLink
@@ -58,13 +34,31 @@ const NavItem = ({ item }) => (
   </NavLink>
 )
 
-// ─── Sidebar Component ───────────────────────────────────────────────────────
+// ─── Sidebar Component ────────────────────────────────────────────────────────
 
 const Navbar = () => {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const isAuthenticated = useSelector(selectIsAuthenticated)
+  const user = useSelector(selectUser)
+
+  const handleLogout = () => {
+    dispatch(logout())
+    toast.success('Logged out successfully!')
+    navigate('/login')
+  }
+
+  const mainNavItems = [
+    { label: 'Home',    icon: Home,  path: '/' },
+    { label: 'Discover', icon: Disc3, path: '/discover' },
+    { label: 'Artists', icon: Mic2,  path: '/artists' },
+    { label: 'Songs',   icon: Music, path: '/songs' },
+    { label: 'Library', icon: Library, path: '/library' },
+  ]
 
   return (
     <aside className="w-[220px] fixed left-0 top-0 h-screen bg-surface flex flex-col border-r border-border z-50 overflow-y-auto">
+
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2.5 text-primary font-bold text-xl">
@@ -78,43 +72,41 @@ const Navbar = () => {
         {mainNavItems.map((item) => (
           <NavItem key={item.path} item={item} />
         ))}
-
-        {/* Dashboard link — only shown when logged in */}
+        {/* Dashboard link — only when logged in */}
         {isAuthenticated && (
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'text-primary bg-primary/10'
-                  : 'text-text-secondary hover:text-text hover:bg-card'
-              }`
-            }
-          >
-            <LayoutDashboard size={17} />
-            <span>Dashboard</span>
-          </NavLink>
+          <NavItem item={{ label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' }} />
         )}
       </div>
 
-      {/* Divider */}
-      <div className="mx-4 my-4 border-t border-border" />
+      {/* Spacer */}
+      <div className="flex-1" />
 
-      {/* Library Navigation */}
-      <div className="px-3 flex flex-col gap-0.5">
-        <p className="px-4 text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">
-          Your Library
-        </p>
-        {libraryNavItems.map((item) => (
-          <NavItem key={item.path} item={item} />
-        ))}
-      </div>
+      {/* Bottom section */}
+      <div className="px-3 py-4 border-t border-border flex flex-col gap-0.5 flex-shrink-0">
+        <NavItem item={{ label: 'Settings', icon: Settings, path: '/settings' }} />
 
-      {/* Bottom Navigation (Settings + Logout) */}
-      <div className="mt-auto px-3 py-4 border-t border-border flex flex-col gap-0.5 flex-shrink-0">
-        {bottomNavItems.map((item) => (
-          <NavItem key={item.path} item={item} />
-        ))}
+        {isAuthenticated ? (
+          <>
+            {/* User pill */}
+            {user && (
+              <div className="flex items-center gap-2 px-4 py-2 mb-1">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xs uppercase flex-shrink-0">
+                  {user.name?.[0] || 'U'}
+                </div>
+                <span className="text-xs text-text-secondary truncate font-medium">{user.name}</span>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-danger hover:bg-danger/10 w-full text-left"
+            >
+              <LogOut size={17} />
+              <span>Logout</span>
+            </button>
+          </>
+        ) : (
+          <NavItem item={{ label: 'Login', icon: LogIn, path: '/login' }} />
+        )}
       </div>
     </aside>
   )

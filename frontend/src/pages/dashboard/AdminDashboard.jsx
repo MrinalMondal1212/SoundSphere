@@ -18,15 +18,9 @@ import {
   blockArtist,
 } from '../../store/adminSlice'
 import { selectUser } from '../../store/authSlice'
+import DashboardLayout from '../../layouts/DashboardLayout'
+import toast from 'react-hot-toast'
 
-/**
- * AdminDashboard — accessible to users with role 'admin' only.
- * Protected by ProtectedRoute in Routing.jsx.
- *
- * Tabs:
- *   - Users: name, email, isBlocked, Block/Unblock button
- *   - Artists: name, email, isApproved, isBlocked, Approve + Block/Unblock buttons
- */
 export default function AdminDashboard() {
   const dispatch = useDispatch()
   const adminUser = useSelector(selectUser)
@@ -34,15 +28,39 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState('users')
 
-  // Fetch data on mount
   useEffect(() => {
     dispatch(fetchAllUsers())
     dispatch(fetchAllArtists())
   }, [dispatch])
 
-  const handleApprove = (id) => dispatch(approveArtist(id))
-  const handleBlockUser = (id) => dispatch(blockUser(id))
-  const handleBlockArtist = (id) => dispatch(blockArtist(id))
+  const handleApprove = async (id) => {
+    const result = await dispatch(approveArtist(id))
+    if (approveArtist.fulfilled.match(result)) {
+      toast.success('Artist approved successfully! ✅')
+    } else {
+      toast.error('Failed to approve artist.')
+    }
+  }
+
+  const handleBlockUser = async (id) => {
+    const result = await dispatch(blockUser(id))
+    if (blockUser.fulfilled.match(result)) {
+      const isBlocked = result.payload?.isBlocked
+      toast.success(isBlocked ? 'User blocked.' : 'User unblocked.')
+    } else {
+      toast.error('Action failed.')
+    }
+  }
+
+  const handleBlockArtist = async (id) => {
+    const result = await dispatch(blockArtist(id))
+    if (blockArtist.fulfilled.match(result)) {
+      const isBlocked = result.payload?.isBlocked
+      toast.success(isBlocked ? 'Artist blocked.' : 'Artist unblocked.')
+    } else {
+      toast.error('Action failed.')
+    }
+  }
 
   const handleRefresh = () => {
     dispatch(fetchAllUsers())
@@ -50,6 +68,7 @@ export default function AdminDashboard() {
   }
 
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-background text-text p-6 md:p-10">
 
       {/* Header */}
@@ -258,6 +277,7 @@ export default function AdminDashboard() {
       </div>
 
     </div>
+  </DashboardLayout>
   )
 }
 

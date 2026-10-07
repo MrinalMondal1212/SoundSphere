@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { loginUser, selectLoading, selectError, selectUser, clearError } from '../../store/authSlice'
+import toast from 'react-hot-toast'
 
 /**
  * Login page — React Hook Form + Redux dispatch.
@@ -39,6 +40,7 @@ export default function Login() {
   const onSubmit = async (data) => {
     const result = await dispatch(loginUser(data))
     if (loginUser.fulfilled.match(result)) {
+      toast.success(`Welcome back! 👋`)
       navigate('/', { replace: true })
     }
   }
